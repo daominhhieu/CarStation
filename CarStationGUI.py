@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import font
 
 from GeneralPage import GeneralPage
 from DriverPage import DriverPage
@@ -54,7 +55,9 @@ class car_station_app(Tk):
 
 class MenuSection(Listbox):  
     def __init__(self, parent, controller): 
-        Listbox.__init__(self, parent,highlightthickness = '3', selectmode = BROWSE)
+        customfont = font.Font(size = 20)
+        Listbox.__init__(self, parent,highlightthickness = '3', selectmode = SINGLE, font = customfont)
+
         self.controller = controller
 
         self.insert(0, 'General')
