@@ -83,3 +83,7 @@ class MenuSection(Listbox):
 if __name__ == "__main__":
     root=car_station_app()
     root.mainloop()
+    try:
+        root.destroy()
+    except Exception:
+        pass
