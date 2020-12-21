@@ -33,7 +33,7 @@ def CV2_test():
     gray = cv2.cvtColor(test_img(), cv2.COLOR_BGR2GRAY)
     canny = cv2.Canny(gray, 50, 150)
     pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-    out_below = pytesseract.image_to_string(canny, config='--psm 10')
+    out_below = pytesseract.image_to_string(canny, config='--psm 9')
     print("OUTPUT:"+ out_below)
     # cv2.imshow('image', canny)
     # cv2.waitKey(0)
