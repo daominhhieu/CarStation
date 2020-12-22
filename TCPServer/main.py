@@ -1,67 +1,17 @@
-import sqlite3
+import selectors
+import sys
+import socket
+import types
+import traceback
+from TCPMessageHandler import Message
+from DatabaseHandler import MyDatabase
 
 DEBUG = "DEBUG_MODE"
+MSG_LENGTH = 1024
+HOST = 'localhost'
+PORT = 2312
 
-class MyDatabase:
-    def __init__(self, database_name):
-        super().__init__()
-        self.database_name = database_name
-        if(self.database_name == DEBUG):
-            self.conn = sqlite3.connect(':memory:')
-        else:
-            self.conn = sqlite3.connect(database_name+".db")
-        self.c = self.conn.cursor()
-
-    
-    def insertData(self, table, data):
-        if(isinstance(data, list) and (len(data) == getTableLength(table))):
-            loc_place_holder = ''
-            for i in data:
-                loc_place_holder += "\'{}\',".format(i)
-            self.c.execute("INSERT INTO {} VALUES ({})".format(table, loc_place_holder[:-1]))
-            self.conn.commit()
-        else:
-            pass
-    
-    def updateData(self, table, data, condition):
-        if(isinstance(data, list) and isinstance(condition, list)):
-            self.c.execute("""UPDATE {} SET {}='{}' WHERE {}='{}'""".format(
-                                    table, data[0], data[1], condition[0], condition[1]))
-            self.conn.commit()
-        else:
-            pass
-
-    def deleteData(self, table, data, value):
-        self.c.execute("DELETE from {} WHERE {} = '{}'")
-        self.conn.commit()
-
-    def createTable(self, table, data):
-        if(isinstance(data, list)):
-            loc_place_holder = ''
-            for i in data:
-                loc_place_holder += "{},".format(i)
-            self.c.execute("""CREATE TABLE {}({})""".format(table,loc_place_holder[:-1]))
-            self.conn.commit()
-        else:
-            pass
-
-    def getData(self, table, data, value):
-        self.c.execute("SELECT * FROM {} WHERE {}='{}'".format(table,data, value))
-        tmp = self.c.fetchall()
-        self.conn.commit()
-        return tmp
-    
-    def getTableLength(self, table):
-        self.c.execute("SELECT * FROM {}".format(table))
-        tmp = len(self.c.fetchall)
-        self.conn.commit()
-        return tmp
-    
-    def closeDB(self):
-        self.conn.close()
-
-    
-
+sel = selectors.DefaultSelector()
 
 def init_db():
     usr_db_template = ['phone TEXT',
@@ -88,10 +38,51 @@ def init_db():
     usrDB.createTable('history', histoty_db_template)
     usrDB.createTable('street', street_db_template)
 
-def main():
-    usrDB = MyDatabase('User Database')
+def accept_wrapper(sock):
+    conn, addr = sock.accept()  # Should be ready to read
+    print('accepted connection from', addr)
+    conn.setblocking(False)#use non blocking mode on socket operation
+    data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
+    message = Message(sel, conn, addr) # initiate message object with found connection
+    #IMPORTANT !
+    sel.register(conn, selectors.EVENT_READ, data=message)# push message object into selector
 
+def TCPConnectionRun():
+    lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Avoid bind() exception: OSError: [Errno 48] Address already in use
+    lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    lsock.bind((HOST, PORT))
+    lsock.listen()
+    print("listening on", (HOST, PORT))
+    lsock.setblocking(False) #use non blocking mode on socket operation
+    sel.register(lsock, selectors.EVENT_READ, data=None)
+
+    while True:
+        events = sel.select(timeout=None)
+        for key, mask in events:
+            if key.data is None:
+                accept_wrapper(key.fileobj)
+            else:
+                #IMPORTANT !
+                message = key.data # pull message object from selector
+                try:
+                    message.process_events(mask)
+                except Exception:
+                    print(
+                        "main: error: exception for",
+                        f"{message.addr}:\n{traceback.format_exc()}",
+                    )
+                    message.close()
     
+
+def main():
+    try:
+        TCPConnectionRun()
+    except KeyboardInterrupt:
+        print("caught keyboard interrupt, exiting")
+    finally:
+        sel.close()
+
 
 if __name__ == "__main__":
     main()
