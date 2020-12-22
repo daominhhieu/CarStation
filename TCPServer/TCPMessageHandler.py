@@ -3,6 +3,7 @@ import selectors
 import json
 import io
 import struct
+MSG_LENGTH = 1024
 
 request_search = {
     "morpheus": "Follow the white rabbit. \U0001f430",
@@ -38,7 +39,7 @@ class Message:
     def _read(self):
         try:
             # Should be ready to read
-            data = self.sock.recv(4096)
+            data = self.sock.recv(MSG_LENGTH)
         except BlockingIOError:
             # Resource temporarily unavailable (errno EWOULDBLOCK)
             pass

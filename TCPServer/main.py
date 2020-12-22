@@ -7,7 +7,6 @@ from TCPMessageHandler import Message
 from DatabaseHandler import MyDatabase
 
 DEBUG = "DEBUG_MODE"
-MSG_LENGTH = 1024
 HOST = 'localhost'
 PORT = 2312
 
