@@ -1,5 +1,6 @@
 import sqlite3
-import time
+from datetime import datetime
+import math
 DEBUG = "DEBUG_MODE"
 
 
@@ -117,46 +118,48 @@ def signup(phone, password):
 
 def addmoney(phone, money):
     usrDB = MyDatabase('User Database')
-    time = time.datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S")
+    loc_time = datetime.now().strftime("%d/%m/%y-%H:%M:%S")
     tmp_data_list = ['phone', 'Longitude1', 'Latitude1',
                     'money', 'time', 'vehicle_name', 'vehicle_mass',
                     'Longitude2', 'Latitude2','street']
     tmp_value_list = [phone, 0, 0, 
-                    money, time ,'None', 0,
+                    "+"+money, loc_time ,'None', 0,
                     0, 0, 'None']
     tmp = usrDB.getData('user','phone',phone)
     if(tmp != [] and tmp[0][5] == 1):
-        usrDB.updateData('user', ['budget', int(tmp[0][2]) + money],['phone', phone])
-        usrDB.insertData('histoy',tmp_data_list,tmp_value_list)
+        usrDB.updateData('user', ['budget', str(int(tmp[0][2]) + int(money))],['phone', phone])
+        usrDB.insertData('history',tmp_data_list,tmp_value_list)
         return "good"
     else:
         return "bad"
 
 def retrievemoney(phone, money):
     usrDB = MyDatabase('User Database')
-    time = time.datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S")
+    time = datetime.now().strftime("%d/%m/%y-%H:%M:%S")
     tmp_data_list = ['phone', 'Longitude1', 'Latitude1',
                     'money', 'time', 'vehicle_name', 'vehicle_mass',
                     'Longitude2', 'Latitude2','street']
     tmp_value_list = [phone, 0, 0, 
-                    money, time ,'None', 0,
+                    "-"+money, time ,'None', 0,
                     0, 0, 'None']
     tmp = usrDB.getData('user','phone',phone)
     if(tmp != [] and tmp[0][5] == 1):
-        usrDB.updateData('user', ['budget', money - int(tmp[0][2])],['phone', phone])
-        usrDB.insertData('histoy',tmp_data_list,tmp_value_list)
+        usrDB.updateData('user', ['budget', str(int(tmp[0][2]) - int(money))],['phone', phone])
+        usrDB.insertData('history',tmp_data_list,tmp_value_list)
         return "good"
     else:
         return "bad"
 
 def payfee(phone, Longitude1, Latitude1, Longitude2, Latitude2, street):
     usrDB = MyDatabase('User Database')
+    distance = distanceCalculation(Longitude1, Latitude1, Longitude2, Latitude2)
+    print("DISTANCE : !!!!! : ", distance)
     tmp = usrDB.getData('user','phone',phone)
     vehicle_name = tmp[0][3]
     vehicle_mass = int(tmp[0][4])
     if(tmp != [] and tmp[0][5] == 1 and vehicle_mass>0):
-        money = getstreet(street)*vehicle_mass
-        time = time.datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S")
+        money = getstreet(street)*vehicle_mass*distance
+        time = datetime.now().strftime("%d/%m/%y-%H:%M:%S")
         tmp_data_list = ['phone', 'Longitude1', 'Latitude1',
                         'money', 'time', 'vehicle_name', 'vehicle_mass',
                         'Longitude2', 'Latitude2','street']
@@ -164,7 +167,7 @@ def payfee(phone, Longitude1, Latitude1, Longitude2, Latitude2, street):
                         money, time ,vehicle_name, vehicle_mass,
                         Longitude2, Latitude2, street]
         usrDB.updateData('user', ['budget', int(tmp[0][2]) - money],['phone', phone])
-        usrDB.insertData('histoy',tmp_data_list,tmp_value_list)
+        usrDB.insertData('history',tmp_data_list,tmp_value_list)
         return "good"
     else:
         return "bad"
@@ -179,9 +182,14 @@ def registerdriver(phone, vehicle_name, vehicle_mass):
     else:
         return "bad"
 
-def gethistory(phone):
+def gethistory(phone, index):
+    int_index = int(index)
     usrDB = MyDatabase('User Database')
-    return usrDB.getData('history','phone',phone)
+    tmp = usrDB.getData('history','phone',phone)
+    if(int_index < len(tmp)):
+        return tmp[int_index]
+    else:
+        return []
 
 def getuserinfo(phone):
     usrDB = MyDatabase('User Database')
@@ -194,3 +202,14 @@ def getstreet(street):
         return int(tmp[0][1])
     else:
         return 0
+
+def lostConnection(addr):
+    usrDB = MyDatabase('User Database')
+    tmp = usrDB.getData('ipkey','ip',addr)
+    if(tmp != []):
+        usrDB.deleteData('ipkey','ip', addr)
+
+def distanceCalculation(x1, y1, x2 ,y2):
+    delta_x = float(x1) - float(x2)
+    delta_y = float(y1) - float(y2)
+    return int(math.sqrt(delta_x*delta_x + delta_y*delta_y))

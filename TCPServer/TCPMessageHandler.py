@@ -122,7 +122,9 @@ class Message:
             if data:
                 self._recv_buffer += data
             else:
-                raise RuntimeError("Peer closed.")
+                lostConnection(self.addr[0])
+                print("delete ip in db:..."+self.addr[0])
+                raise RuntimeError("Peer closed.")                
 
     def DecryptMessage(self):
         if(len(self._recv_buffer)>0):
@@ -268,7 +270,8 @@ class Message:
 
         elif(action == "gethistory"):
             phone = self.request.get("phone")
-            answer = gethistory(phone)
+            index = self.request.get("index")
+            answer = gethistory(phone, index)
             if(answer != []):
                 content.update({"result": "good"})
                 content.update({"phone": answer[0]})

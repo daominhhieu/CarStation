@@ -10,7 +10,7 @@ import time
 import base64
 
 DEBUG = "DEBUG_MODE"
-HOST = '192.168.1.17'
+HOST = '192.168.1.18'
 PORT = 2312
 TIMEOUT = 5
 
