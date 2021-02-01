@@ -23,6 +23,6 @@ void loop() {
     SerialBT.write(Serial.read());
   }
   if (SerialBT.available()) {
-    Serial.write(SerialBT.read());
+    Serial.print(SerialBT.read());
   }
 }

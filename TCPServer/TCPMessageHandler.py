@@ -257,8 +257,9 @@ class Message:
             Latitude1 = self.request.get("Latitude1")
             Longitude2 = self.request.get("Longitude2")
             Latitude2 = self.request.get("Latitude2")
+            distance = self.request.get("distance")
             street = self.request.get("street")
-            answer = payfee(phone, Longitude1, Latitude1, Longitude2, Latitude2, street)
+            answer = payfee(phone, Longitude1, Latitude1, Longitude2, Latitude2, distance, street)
             content.update({"result": answer})
 
         elif(action == "registerdriver"):

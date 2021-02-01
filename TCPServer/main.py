@@ -6,11 +6,12 @@ import traceback
 from TCPMessageHandler import Message
 from DatabaseHandler import MyDatabase
 from cryptography.fernet import Fernet
+
 import time
 import base64
 
 DEBUG = "DEBUG_MODE"
-HOST = '192.168.1.18'
+HOST = '172.20.10.3'
 PORT = 2312
 TIMEOUT = 5
 
